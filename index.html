@@ -218,12 +218,22 @@
         inset 0 -1px 0 rgba(0, 0, 0, 0.16);
     }
 
-    /* Tab active: solid accent fill */
+    /* Tab active: iOS glass fill */
     .tab-btn.active-tab {
       background: transparent !important;
     }
     .tab-btn.active-tab::after {
-      background: #5B4FE8;
+      background: linear-gradient(
+        160deg,
+        rgba(160, 148, 255, 0.72) 0%,
+        rgba(100,  88, 232, 0.60) 45%,
+        rgba(78,   64, 210, 0.68) 100%
+      );
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      box-shadow:
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.30),
+        inset 0 -1px  0 rgba(0, 0, 0, 0.18);
     }
 
 
@@ -264,10 +274,96 @@
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #08081A; }
     ::-webkit-scrollbar-thumb { background: #2A2B45; border-radius: 3px; }
+
+    /* ── Bomb Cursor ── */
+    #bomb-cursor {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      font-size: 28px;
+      transform: translate(-50%, -50%) rotate(-30deg);
+      transition: transform 0.1s;
+      will-change: left, top;
+      display: none;
+      filter: drop-shadow(0 0 6px rgba(255,160,0,0.7));
+    }
+    .bomb-zone { cursor: none; }
+    .bomb-zone * { cursor: none; }
+
+    /* ── Explosion ring ── */
+    @keyframes explode-ring {
+      0%   { transform: translate(-50%,-50%) scale(0); opacity: 0.9; }
+      100% { transform: translate(-50%,-50%) scale(1);  opacity: 0; }
+    }
+    .explosion-ring {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9998;
+      border-radius: 50%;
+      border: 3px solid #FF8C00;
+      box-shadow: 0 0 12px 4px rgba(255,140,0,0.5), inset 0 0 12px rgba(255,80,0,0.3);
+      animation: explode-ring 0.5s ease-out forwards;
+    }
+
+    /* ── Explosion particle ── */
+    @keyframes particle-fly {
+      0%   { opacity: 1; transform: translate(0,0) rotate(0deg) scale(1); }
+      80%  { opacity: 0.8; }
+      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(0.3); }
+    }
+    .explosion-particle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9997;
+      font-size: 14px;
+      animation: particle-fly 0.6s ease-out forwards;
+    }
+
+    /* ── Screen flash ── */
+    @keyframes screen-flash {
+      0%   { opacity: 0; }
+      15%  { opacity: 0.18; }
+      100% { opacity: 0; }
+    }
+    #screen-flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9996;
+      background: radial-gradient(circle at var(--fx,50%) var(--fy,50%), rgba(255,180,0,0.6) 0%, transparent 60%);
+      opacity: 0;
+    }
+    #screen-flash.flashing {
+      animation: screen-flash 0.4s ease-out forwards;
+    }
+
+    /* ── Card blast-off ── */
+    .card-blasted {
+      animation: card-blast 0.55s ease-out forwards !important;
+      transform-origin: center center;
+      pointer-events: none;
+    }
+    @keyframes card-blast {
+      0%   { transform: translateY(-3px) scale(1);    opacity: 1; filter: blur(0); }
+      25%  { transform: translateY(-3px) scale(1.04); opacity: 1; filter: blur(0); }
+      60%  { transform: translate(var(--bx,0), var(--by,-60px)) scale(0.8) rotate(var(--br,8deg)); opacity: 0.4; filter: blur(4px); }
+      100% { transform: translate(var(--bx,0), var(--by,-80px)) scale(0.6) rotate(var(--br,12deg)); opacity: 0; filter: blur(8px); }
+    }
+
+    /* Bomb cursor hover scale */
+    #bomb-cursor.armed {
+      transform: translate(-50%, -50%) rotate(-30deg) scale(1.2);
+      filter: drop-shadow(0 0 10px rgba(255,100,0,0.9));
+    }
   </style>
 </head>
 
 <body class="bg-page text-white min-h-screen">
+
+<!-- Bomb cursor follower -->
+<div id="bomb-cursor">💣</div>
+<!-- Screen flash overlay -->
+<div id="screen-flash"></div>
 
 <!-- ═══════════════════════════════════════
      NAVBAR
@@ -301,7 +397,7 @@
 <!-- ═══════════════════════════════════════
      HERO
 ═══════════════════════════════════════ -->
-<section id="hero" class="relative overflow-hidden">
+<section id="hero" class="relative overflow-hidden bomb-zone">
   <!-- Background video -->
   <video
     class="absolute inset-0 w-full h-full object-cover"
@@ -481,45 +577,80 @@
 
   <!-- ── 休闲娱乐 ── -->
   <div id="panel-fun" class="tab-panel">
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📖</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
-        <h4 class="text-[16px] font-bold text-white">AI 故事生成器</h4>
-        <p class="text-[13px] text-muted">输入关键词与风格，生成专属沉浸式互动故事</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者G</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.9</span>
-        </div>
-      </div>
-    </div>
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+    <!-- ── 真实工具 ── -->
+    <a href="https://velvety-pixie-9a02fa.netlify.app/" target="_blank" rel="noopener noreferrer"
+       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
       <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🎭</div>
       <div class="p-4 flex flex-col gap-2">
         <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
-        <h4 class="text-[16px] font-bold text-white">角色扮演剧本</h4>
-        <p class="text-[13px] text-muted">AI 生成定制化 RPG 剧本，支持多种世界观与角色设定</p>
+        <h4 class="text-[16px] font-bold text-white">番剧灵魂 MBTI 测试</h4>
+        <p class="text-[13px] text-muted">漫人物 × 16 型人格精准绑定，找到与你同频的动漫角色，强化身份认同与社交共鸣</p>
         <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者H</span>
+          <span class="text-[12px] text-faint">👤 MICC</span>
           <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.8</span>
+          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
         </div>
       </div>
-    </div>
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🎵</div>
+    </a>
+    <a href="https://blancheeeee.github.io/Piano-Demo/" target="_blank" rel="noopener noreferrer"
+       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🎹</div>
       <div class="p-4 flex flex-col gap-2">
         <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
-        <h4 class="text-[16px] font-bold text-white">歌词创作助手</h4>
-        <p class="text-[13px] text-muted">描述情绪与风格，生成押韵流畅的原创歌词作品</p>
+        <h4 class="text-[16px] font-bold text-white">简易键盘钢琴谱</h4>
+        <p class="text-[13px] text-muted">键盘三排字母对应三组音区，零学习成本弹奏《小星星》，随时捕捉音乐灵感</p>
         <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者I</span>
+          <span class="text-[12px] text-faint">👤 MICC</span>
           <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.6</span>
+          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
         </div>
       </div>
-    </div>
+    </a>
+    <a href="https://glowing-truffle-529a80.netlify.app/" target="_blank" rel="noopener noreferrer"
+       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🖼️</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
+        <h4 class="text-[16px] font-bold text-white">世界名画翻翻乐</h4>
+        <p class="text-[13px] text-muted">以达芬奇、梵高、莫奈等大师名作为主题的翻牌配对游戏，通关后附赠画作赏析</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 MICC</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+        </div>
+      </div>
+    </a>
+    <a href="https://zhuoba1999-art.github.io/mood-cocktail/" target="_blank" rel="noopener noreferrer"
+       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🍹</div>
+      <div class="p-4 flex flex-col gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/20 border border-red-500 text-red-400 w-fit">🪜 需要 VPN</span>
+        </div>
+        <h4 class="text-[16px] font-bold text-white">心情鸡尾酒调酒师</h4>
+        <p class="text-[13px] text-muted">根据你今天的心情，AI 为你调制一杯专属鸡尾酒，让我们微醺吧 🥃</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 MICC</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+        </div>
+      </div>
+    </a>
+    <a href="https://xyuixuyi123-stack.github.io/bbq-game/" target="_blank" rel="noopener noreferrer"
+       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🔥</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
+        <h4 class="text-[16px] font-bold text-white">BBQ 烧烤大排档</h4>
+        <p class="text-[13px] text-muted">化身烧烤摊店主，用心烤制美味满足形形色色的客人，感受市井烟火气与人间温暖</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 MICC</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+        </div>
+      </div>
+    </a>
   </div>
 
   <!-- ── 艺术设计 ── -->
@@ -563,6 +694,21 @@
         </div>
       </div>
     </div>
+    <!-- ── 真实工具 ── -->
+    <a href="https://colormoodmix.netlify.app/" target="_blank" rel="noopener noreferrer"
+       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🌈</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-pink-500/20 border border-pink-500 text-pink-400 w-fit">艺术设计</span>
+        <h4 class="text-[16px] font-bold text-white">色彩情绪调色板</h4>
+        <p class="text-[13px] text-muted">通过混合三原色为"忧郁""欢乐"等情感调配色彩，十关挑战探索色彩与情绪的微妙关联</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 MICC</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+        </div>
+      </div>
+    </a>
   </div>
 
   <!-- ── 便利小工具 ── -->
@@ -603,6 +749,57 @@
           <span class="text-[12px] text-faint">👤 开发者O</span>
           <span class="flex-1"></span>
           <span class="text-[12px] font-semibold text-amber-400">⭐ 4.6</span>
+        </div>
+      </div>
+    </div>
+    <!-- ── 真实工具 ── -->
+    <a href="https://twitter-video-downloader-nine.vercel.app/" target="_blank" rel="noopener noreferrer"
+       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📥</div>
+      <div class="p-4 flex flex-col gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/20 border border-red-500 text-red-400 w-fit">🪜 需要翻墙</span>
+        </div>
+        <h4 class="text-[16px] font-bold text-white">X 视频下载工具</h4>
+        <p class="text-[13px] text-muted">免会员下载 X (Twitter) 视频，支持选择分辨率与多链接批量下载，手机 &amp; Web 端已适配</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 MICC</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+        </div>
+      </div>
+    </a>
+    <a href="https://daqianli.github.io/aodclock-landing/" target="_blank" rel="noopener noreferrer"
+       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">⏰</div>
+      <div class="p-4 flex flex-col gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-500/20 border border-sky-500 text-sky-400 w-fit">📱 iOS 已上架</span>
+        </div>
+        <h4 class="text-[16px] font-bold text-white">AODclock 息屏时钟</h4>
+        <p class="text-[13px] text-muted">为没有 Always-On Display 的 iPad mini 打造，优雅的息屏时钟应用，iOS 已上架 / 安卓 APK 可下载</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 MICC</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+        </div>
+      </div>
+    </a>
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden opacity-70">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🌸</div>
+      <div class="p-4 flex flex-col gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-yellow-500/20 border border-yellow-500 text-yellow-400 w-fit">⏳ 审核中</span>
+        </div>
+        <h4 class="text-[16px] font-bold text-white">花粉浓度查询小程序</h4>
+        <p class="text-[13px] text-muted">鼻炎患者必备！基于植被测算的花粉浓度实时查询，接入开放 API，聊胜于无但真的有用</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 MICC</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-faint">即将上线</span>
         </div>
       </div>
     </div>
@@ -781,6 +978,146 @@
       activeBtn.classList.remove('text-faint', 'font-medium');
     }
   }
+
+  // ══════════════════════════════════════════
+  //  BOMB CURSOR + EXPLOSION
+  // ══════════════════════════════════════════
+  (function () {
+    const cursor   = document.getElementById('bomb-cursor');
+    const flash    = document.getElementById('screen-flash');
+    const bombZone = document.getElementById('hero');
+
+    // Debris chars used for particles
+    const DEBRIS = ['◆','▲','●','★','✦','◉','▪','◈'];
+    // Blast radius for card destruction (px)
+    const BLAST_RADIUS = 280;
+
+    let mouseX = 0, mouseY = 0;
+
+    // ── Follow mouse ──────────────────────────
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      cursor.style.left = mouseX + 'px';
+      cursor.style.top  = mouseY + 'px';
+    });
+
+    // Show / hide bomb cursor when entering / leaving bomb zone
+    bombZone.addEventListener('mouseenter', () => {
+      cursor.style.display = 'block';
+    });
+    bombZone.addEventListener('mouseleave', () => {
+      cursor.style.display = 'none';
+      cursor.classList.remove('armed');
+    });
+
+    // Armed state on hover over interactive elements (gives a pulsing look)
+    bombZone.addEventListener('mouseover', (e) => {
+      const isInteractive = e.target.closest('a, button');
+      cursor.classList.toggle('armed', !!isInteractive);
+    });
+
+    // ── Click: BOOM ───────────────────────────
+    bombZone.addEventListener('click', (e) => {
+      triggerExplosion(e.clientX, e.clientY);
+    });
+
+    function triggerExplosion(cx, cy) {
+      // 1. Screen flash
+      flash.style.setProperty('--fx', cx + 'px');
+      flash.style.setProperty('--fy', cy + 'px');
+      flash.classList.remove('flashing');
+      void flash.offsetWidth; // reflow to restart
+      flash.classList.add('flashing');
+
+      // 2. Shockwave rings (3 with staggered delay + size)
+      const ringSizes = [
+        { size: 120, delay: 0,    color: '#FF8C00' },
+        { size: 220, delay: 80,   color: '#FF4500' },
+        { size: 340, delay: 160,  color: 'rgba(255,140,0,0.4)' },
+      ];
+      ringSizes.forEach(({ size, delay, color }) => {
+        setTimeout(() => {
+          const ring = document.createElement('div');
+          ring.className = 'explosion-ring';
+          ring.style.left        = cx + 'px';
+          ring.style.top         = cy + 'px';
+          ring.style.width       = size + 'px';
+          ring.style.height      = size + 'px';
+          ring.style.borderColor = color;
+          ring.style.boxShadow   = `0 0 16px 4px ${color}`;
+          document.body.appendChild(ring);
+          ring.addEventListener('animationend', () => ring.remove());
+        }, delay);
+      });
+
+      // 3. Debris particles (12 pieces)
+      for (let i = 0; i < 12; i++) {
+        const angle    = (i / 12) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+        const distance = 80 + Math.random() * 120;
+        const tx = Math.cos(angle) * distance;
+        const ty = Math.sin(angle) * distance;
+        const rot = (Math.random() - 0.5) * 540 + 'deg';
+        const char = DEBRIS[Math.floor(Math.random() * DEBRIS.length)];
+        const colors = ['#FF8C00','#FF4500','#FFD700','#FF6347','#FFA500','#FF69B4'];
+        const color  = colors[Math.floor(Math.random() * colors.length)];
+        const size   = 10 + Math.random() * 10;
+        const delay  = Math.random() * 80;
+
+        setTimeout(() => {
+          const p = document.createElement('div');
+          p.className = 'explosion-particle';
+          p.textContent = char;
+          p.style.left     = cx + 'px';
+          p.style.top      = cy + 'px';
+          p.style.color    = color;
+          p.style.fontSize = size + 'px';
+          p.style.setProperty('--tx', tx + 'px');
+          p.style.setProperty('--ty', ty + 'px');
+          p.style.setProperty('--rot', rot);
+          document.body.appendChild(p);
+          p.addEventListener('animationend', () => p.remove());
+        }, delay);
+      }
+
+      // 4. Blast nearby tool cards
+      blastNearbyCards(cx, cy);
+    }
+
+    function blastNearbyCards(cx, cy) {
+      document.querySelectorAll('.tool-card').forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const cardCx = rect.left + rect.width  / 2;
+        const cardCy = rect.top  + rect.height / 2;
+        const dist   = Math.hypot(cardCx - cx, cardCy - cy);
+
+        if (dist < BLAST_RADIUS) {
+          // Direction away from explosion centre
+          const dx = cardCx - cx;
+          const dy = cardCy - cy;
+          const len = Math.hypot(dx, dy) || 1;
+          const strength = 1 - dist / BLAST_RADIUS; // 1 = centre, 0 = edge
+          const bx = (dx / len) * strength * 80;
+          const by = (dy / len) * strength * 80 - 20; // slight upward bias
+          const br = ((Math.random() - 0.5) * 30 * strength) + 'deg';
+
+          card.style.setProperty('--bx', bx + 'px');
+          card.style.setProperty('--by', by + 'px');
+          card.style.setProperty('--br', br);
+
+          card.classList.add('card-blasted');
+
+          // Restore card after animation
+          card.addEventListener('animationend', () => {
+            card.classList.remove('card-blasted');
+            card.style.removeProperty('--bx');
+            card.style.removeProperty('--by');
+            card.style.removeProperty('--br');
+          }, { once: true });
+        }
+      });
+    }
+  })();
 
   // ── Danmaku send ──────────────────────────
   const danmakuEmojis = ['✨','🔥','💬','🎉','👋','💡','🌟','🎊','😄','👍','🚀','🎶'];
