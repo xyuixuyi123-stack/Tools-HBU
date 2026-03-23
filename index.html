@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ToolHub — AI 创意工具广场</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            page:    '#08081A',
+            card:    '#12132A',
+            cardtop: '#1A1B32',
+            border:  '#2A2B45',
+            accent:  '#5B4FE8',
+            purple:  '#8B7FFF',
+            muted:   '#8B8FA8',
+            faint:   '#6B6F8A',
+          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { background: #08081A; font-family: 'Inter', sans-serif; }
+
+    /* Gradient hero text */
+    .text-gradient {
+      background: linear-gradient(135deg, #ffffff 30%, #8B7FFF 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Card hover glow */
+    .tool-card {
+      transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s;
+    }
+    .tool-card:hover {
+      border-color: #5B4FE8 !important;
+      box-shadow: 0 0 28px rgba(91, 79, 232, 0.22);
+      transform: translateY(-3px);
+    }
+
+    /* Hero radial glow */
+    .hero-glow {
+      background: radial-gradient(ellipse 60% 50% at 50% 60%, rgba(91,79,232,0.18) 0%, transparent 70%);
+    }
+
+    /* Glowing border animation (shared) */
+    @property --glow-angle {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+    @keyframes glow-spin {
+      0%   { --glow-angle: 0deg; }
+      100% { --glow-angle: 360deg; }
+    }
+    .glow-border {
+      position: relative;
+      z-index: 0;
+    }
+    .glow-border::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: inherit;
+      background: conic-gradient(
+        from var(--glow-angle, 0deg),
+        transparent 0%,
+        #5B4FE8 10%,
+        #8B7FFF 20%,
+        #c084fc 30%,
+        transparent 40%,
+        transparent 100%
+      );
+      animation: glow-spin 2.5s linear infinite;
+      z-index: -2;
+    }
+    .glow-border::after {
+      content: '';
+      position: absolute;
+      inset: 1.5px;
+      border-radius: inherit;
+      z-index: -1;
+    }
+
+    /* iOS glass buttons */
+    .ios-glass-primary {
+      background: linear-gradient(
+        160deg,
+        rgba(160, 148, 255, 0.72) 0%,
+        rgba(100, 88, 232, 0.60) 45%,
+        rgba(78,  64, 210, 0.68) 100%
+      );
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(180, 168, 255, 0.45);
+      box-shadow:
+        0 8px 32px rgba(91, 79, 232, 0.40),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.30),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+      transition: filter 0.2s, box-shadow 0.2s;
+    }
+    .ios-glass-primary:hover {
+      filter: brightness(1.12);
+      box-shadow:
+        0 12px 40px rgba(91, 79, 232, 0.55),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+    }
+
+    .ios-glass-secondary {
+      background: linear-gradient(
+        160deg,
+        rgba(255, 255, 255, 0.13) 0%,
+        rgba(255, 255, 255, 0.05) 100%
+      );
+      backdrop-filter: blur(20px) saturate(150%);
+      -webkit-backdrop-filter: blur(20px) saturate(150%);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.25),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.22),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .ios-glass-secondary:hover {
+      background: linear-gradient(
+        160deg,
+        rgba(255, 255, 255, 0.20) 0%,
+        rgba(255, 255, 255, 0.10) 100%
+      );
+      box-shadow:
+        0 6px 28px rgba(0, 0, 0, 0.30),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.28),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+    }
+
+    /* iOS glass tab bar */
+    .ios-glass-tabbar {
+      background: rgba(12, 13, 30, 0.60);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border-color: rgba(255, 255, 255, 0.09);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.10),
+        0 4px 24px rgba(0, 0, 0, 0.40);
+    }
+
+    /* iOS glass tool card */
+    .ios-glass-card {
+      background: rgba(14, 15, 34, 0.55);
+      backdrop-filter: blur(20px) saturate(150%);
+      -webkit-backdrop-filter: blur(20px) saturate(150%);
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+    .ios-glass-card .bg-cardtop {
+      background: rgba(22, 23, 46, 0.65) !important;
+    }
+
+    /* Danmaku input + send */
+    .danmaku-input {
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .danmaku-input:focus {
+      border-color: rgba(139, 127, 255, 0.55);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 0 0 2px rgba(91,79,232,0.18);
+    }
+    .danmaku-send-btn {
+      background: linear-gradient(160deg, rgba(139,127,255,0.65) 0%, rgba(91,79,232,0.55) 100%);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(180, 168, 255, 0.35);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 2px 10px rgba(91,79,232,0.28);
+      transition: filter 0.15s;
+    }
+    .danmaku-send-btn:hover:not(:disabled) { filter: brightness(1.15); }
+    .danmaku-send-btn:disabled { opacity: 0.6; cursor: default; }
+
+    /* iOS glass footer submit button */
+    .ios-glass-submit {
+      background: linear-gradient(
+        160deg,
+        rgba(160, 148, 255, 0.72) 0%,
+        rgba(100,  88, 232, 0.60) 45%,
+        rgba(78,   64, 210, 0.68) 100%
+      );
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(180, 168, 255, 0.40);
+      box-shadow:
+        0 8px 28px rgba(91, 79, 232, 0.38),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.28),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.16);
+      transition: filter 0.2s, box-shadow 0.2s;
+    }
+    .ios-glass-submit:hover {
+      filter: brightness(1.12);
+      box-shadow:
+        0 12px 36px rgba(91, 79, 232, 0.52),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.32),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.16);
+    }
+
+    /* Tab active: solid accent fill */
+    .tab-btn.active-tab {
+      background: transparent !important;
+    }
+    .tab-btn.active-tab::after {
+      background: #5B4FE8;
+    }
+
+
+
+    /* Tab transition */
+    .tab-panel { display: none; }
+    .tab-panel.active {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .tab-panel.active { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 1024px) {
+      .tab-panel.active { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* Danmaku scroll */
+    .danmaku-wrap { overflow: hidden; white-space: nowrap; }
+    .danmaku-inner {
+      display: inline-block;
+      animation: marquee 40s linear infinite;
+    }
+    .danmaku-inner:hover { animation-play-state: paused; }
+    @keyframes marquee {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Star badge shimmer */
+    .badge { display: inline-flex; align-items: center; }
+
+    /* Nav blur */
+    nav { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #08081A; }
+    ::-webkit-scrollbar-thumb { background: #2A2B45; border-radius: 3px; }
+  </style>
+</head>
+
+<body class="bg-page text-white min-h-screen">
+
+<!-- ═══════════════════════════════════════
+     NAVBAR
+═══════════════════════════════════════ -->
+<nav class="sticky top-0 z-50 bg-page/80 border-b border-border">
+  <div class="max-w-7xl mx-auto px-16 h-[72px] flex items-center gap-10">
+    <!-- Logo -->
+    <a href="#" class="flex items-center gap-2.5 shrink-0">
+      <div class="w-9 h-9 bg-accent rounded-[10px] flex items-center justify-center text-lg">⚡</div>
+      <span class="text-xl font-extrabold text-white">ToolHub</span>
+    </a>
+
+    <div class="flex-1"></div>
+
+    <!-- Links -->
+    <div class="hidden md:flex items-center gap-8 text-[15px]">
+      <a href="#hero"    class="text-muted hover:text-white transition-colors">首页</a>
+      <a href="#tools"   class="text-white font-semibold">工具广场</a>
+      <a href="#footer"  class="text-muted hover:text-white transition-colors">关于我们</a>
+    </div>
+
+    <!-- CTA -->
+    <a href="#submit"
+       class="ml-6 px-5 h-[38px] bg-accent hover:bg-[#6D62F0] rounded-full text-[14px] font-semibold text-white flex items-center transition-colors shrink-0">
+      提交工具 +
+    </a>
+  </div>
+</nav>
+
+
+<!-- ═══════════════════════════════════════
+     HERO
+═══════════════════════════════════════ -->
+<section id="hero" class="relative overflow-hidden">
+  <!-- Background video -->
+  <video
+    class="absolute inset-0 w-full h-full object-cover"
+    autoplay muted loop playsinline
+    poster="">
+    <!-- 替换 src 为你的视频文件路径，例如: src="./hero-bg.mp4" -->
+    <source src="" type="video/mp4" />
+  </video>
+  <!-- Dark overlay so text remains readable -->
+  <div class="absolute inset-0 bg-[#08081A]/70 hero-glow"></div>
+
+  <div class="relative z-10 max-w-4xl mx-auto px-8 pt-24 pb-20 flex flex-col items-center text-center gap-7">
+
+    <!-- Tag pill -->
+    <div class="px-4 h-[30px] flex items-center gap-2 rounded-full border border-accent/60 bg-accent/10 text-[13px] font-medium text-purple">
+      🚀&nbsp; AI 创意工具聚合平台
+    </div>
+
+    <!-- Title -->
+    <div class="flex flex-col items-center gap-2">
+      <h1 class="text-[60px] font-extrabold leading-tight tracking-tight text-white">发现 · 分享 · 创造</h1>
+      <h2 class="text-[60px] font-extrabold leading-tight tracking-tight text-gradient">开发者共建的 AI 工具广场</h2>
+    </div>
+
+    <!-- Subtitle -->
+    <p class="text-[17px] text-muted max-w-2xl leading-relaxed">
+      汇聚全球开发者打造的 AI 创意小工具，涵盖办公、数据、娱乐、艺术等六大品类
+    </p>
+
+    <!-- CTAs -->
+    <div class="flex items-center gap-4 mt-1">
+      <a href="#tools"
+         class="ios-glass-primary px-8 h-[52px] rounded-full text-[16px] font-semibold text-white flex items-center">
+        浏览工具广场
+      </a>
+      <a href="#submit"
+         class="ios-glass-secondary px-8 h-[52px] rounded-full text-[16px] font-medium text-[#C8C4E8] flex items-center">
+        提交我的工具
+      </a>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     TOOL SHOWCASE
+═══════════════════════════════════════ -->
+<section id="tools" class="max-w-7xl mx-auto px-16 py-16">
+
+  <!-- Section header -->
+  <div class="flex items-baseline gap-4 mb-8">
+    <h3 class="text-[32px] font-extrabold text-white">AI 创意工具广场</h3>
+    <span class="text-[14px] text-faint">精选开发者提交的优质工具</span>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="flex items-center gap-1 ios-glass-tabbar border rounded-[14px] p-1 mb-8 overflow-x-auto">
+    <button onclick="switchTab('office')"
+            id="tab-office"
+            class="tab-btn active-tab glow-border shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-semibold text-white bg-accent transition-all">
+      💼 办公工具
+    </button>
+    <button onclick="switchTab('data')"
+            id="tab-data"
+            class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
+      📊 数据相关
+    </button>
+    <button onclick="switchTab('fun')"
+            id="tab-fun"
+            class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
+      🎮 休闲娱乐
+    </button>
+    <button onclick="switchTab('art')"
+            id="tab-art"
+            class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
+      🎨 艺术设计
+    </button>
+    <button onclick="switchTab('tools')"
+            id="tab-tools"
+            class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
+      🔧 便利小工具
+    </button>
+    <button onclick="switchTab('other')"
+            id="tab-other"
+            class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
+      📦 其他
+    </button>
+  </div>
+
+  <!-- ── 办公工具 ── -->
+  <div id="panel-office" class="tab-panel active">
+    <!-- card -->
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📝</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-accent/20 border border-accent text-purple w-fit">办公工具</span>
+        <h4 class="text-[16px] font-bold text-white">AI 会议纪要助手</h4>
+        <p class="text-[13px] text-muted">一键生成会议摘要与待办事项，支持多种格式导出</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者A</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.8</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📧</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-accent/20 border border-accent text-purple w-fit">办公工具</span>
+        <h4 class="text-[16px] font-bold text-white">智能邮件起草器</h4>
+        <p class="text-[13px] text-muted">输入要点，AI 帮你生成专业商务邮件，支持多种语气</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者B</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.7</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📊</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-accent/20 border border-accent text-purple w-fit">办公工具</span>
+        <h4 class="text-[16px] font-bold text-white">PPT 大纲生成器</h4>
+        <p class="text-[13px] text-muted">描述主题，自动生成完整演示文稿框架与内容要点</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者C</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.9</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 数据相关 ── -->
+  <div id="panel-data" class="tab-panel">
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📈</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 border border-emerald-500 text-emerald-400 w-fit">数据相关</span>
+        <h4 class="text-[16px] font-bold text-white">数据可视化生成器</h4>
+        <p class="text-[13px] text-muted">粘贴数据，自动生成折线图、柱状图、饼图等多种可视化</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者D</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.6</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🗄️</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 border border-emerald-500 text-emerald-400 w-fit">数据相关</span>
+        <h4 class="text-[16px] font-bold text-white">SQL 查询优化器</h4>
+        <p class="text-[13px] text-muted">粘贴 SQL，AI 自动分析瓶颈并给出优化建议与重写方案</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者E</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.5</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🧹</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 border border-emerald-500 text-emerald-400 w-fit">数据相关</span>
+        <h4 class="text-[16px] font-bold text-white">数据清洗助手</h4>
+        <p class="text-[13px] text-muted">上传表格，快速识别重复、缺失、格式异常等数据问题</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者F</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.7</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 休闲娱乐 ── -->
+  <div id="panel-fun" class="tab-panel">
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📖</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
+        <h4 class="text-[16px] font-bold text-white">AI 故事生成器</h4>
+        <p class="text-[13px] text-muted">输入关键词与风格，生成专属沉浸式互动故事</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者G</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.9</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🎭</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
+        <h4 class="text-[16px] font-bold text-white">角色扮演剧本</h4>
+        <p class="text-[13px] text-muted">AI 生成定制化 RPG 剧本，支持多种世界观与角色设定</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者H</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.8</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🎵</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
+        <h4 class="text-[16px] font-bold text-white">歌词创作助手</h4>
+        <p class="text-[13px] text-muted">描述情绪与风格，生成押韵流畅的原创歌词作品</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者I</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 艺术设计 ── -->
+  <div id="panel-art" class="tab-panel">
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🎨</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-pink-500/20 border border-pink-500 text-pink-400 w-fit">艺术设计</span>
+        <h4 class="text-[16px] font-bold text-white">AI 配色方案助手</h4>
+        <p class="text-[13px] text-muted">描述场景氛围，生成和谐专业的全套配色方案</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者J</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.7</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🔤</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-pink-500/20 border border-pink-500 text-pink-400 w-fit">艺术设计</span>
+        <h4 class="text-[16px] font-bold text-white">字体搭配推荐</h4>
+        <p class="text-[13px] text-muted">上传设计稿，AI 分析风格并推荐最佳字体组合方案</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者K</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.5</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">✏️</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-pink-500/20 border border-pink-500 text-pink-400 w-fit">艺术设计</span>
+        <h4 class="text-[16px] font-bold text-white">Logo 创意描述器</h4>
+        <p class="text-[13px] text-muted">描述品牌理念，生成详细的 Logo 设计方向与 Prompt</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者L</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.8</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 便利小工具 ── -->
+  <div id="panel-tools" class="tab-panel">
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">✂️</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
+        <h4 class="text-[16px] font-bold text-white">智能文本压缩工具</h4>
+        <p class="text-[13px] text-muted">长文一键提炼核心内容，支持自定义压缩比例与风格</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者M</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.5</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🌐</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
+        <h4 class="text-[16px] font-bold text-white">翻译润色助手</h4>
+        <p class="text-[13px] text-muted">翻译的同时提升表达质量，支持中英日韩等十余种语言</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者N</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.8</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🕐</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
+        <h4 class="text-[16px] font-bold text-white">时区会议助手</h4>
+        <p class="text-[13px] text-muted">多城市时区智能换算，一键找到全员都合适的会议时段</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者O</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 其他 ── -->
+  <div id="panel-other" class="tab-panel">
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">💡</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-500/20 border border-slate-400 text-slate-300 w-fit">其他</span>
+        <h4 class="text-[16px] font-bold text-white">AI 名字生成器</h4>
+        <p class="text-[13px] text-muted">描述项目或品牌调性，生成朗朗上口的中英文创意命名</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者P</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.4</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">💬</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-500/20 border border-slate-400 text-slate-300 w-fit">其他</span>
+        <h4 class="text-[16px] font-bold text-white">代码注释生成器</h4>
+        <p class="text-[13px] text-muted">粘贴任意代码，自动添加清晰准确的中文注释说明</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者Q</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.7</span>
+        </div>
+      </div>
+    </div>
+    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📚</div>
+      <div class="p-4 flex flex-col gap-2">
+        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-500/20 border border-slate-400 text-slate-300 w-fit">其他</span>
+        <h4 class="text-[16px] font-bold text-white">学习计划制定器</h4>
+        <p class="text-[13px] text-muted">输入学习目标与时间，生成个性化分阶段学习路径规划</p>
+        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+          <span class="text-[12px] text-faint">👤 开发者R</span>
+          <span class="flex-1"></span>
+          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════ -->
+<footer id="footer">
+
+  <!-- Invite band -->
+  <div id="submit" class="bg-[#0E0E24] border-t border-border">
+    <div class="max-w-7xl mx-auto px-16 py-12 flex flex-col md:flex-row items-center gap-8">
+      <div class="flex flex-col gap-2 flex-1">
+        <h4 class="text-[26px] font-extrabold text-white">🛠️&nbsp; 你也有创意工具？加入我们！</h4>
+        <p class="text-[15px] text-muted">向社区分享你的 AI 小工具，让更多开发者和用户受益</p>
+      </div>
+      <a href="mailto:contact@toolhub.ai"
+         class="ios-glass-submit px-7 h-12 rounded-full text-[15px] font-bold text-white flex items-center shrink-0">
+        立即提交工具 →
+      </a>
+    </div>
+  </div>
+
+  <!-- Danmaku zone -->
+  <div class="bg-[#0B0B18] border-t border-border py-4 px-0">
+    <div class="flex items-center gap-3 px-8 mb-3">
+      <span class="text-base">💬</span>
+      <span class="text-[13px] font-semibold text-purple">实时弹幕</span>
+      <span class="flex-1"></span>
+      <!-- Send danmaku -->
+      <div class="flex items-center gap-2">
+        <input id="danmaku-input" type="text" maxlength="30" placeholder="说点什么…"
+          onkeydown="if(event.key==='Enter') sendDanmaku()"
+          class="danmaku-input h-8 w-44 px-3 rounded-full text-[13px] text-white placeholder:text-faint focus:outline-none" />
+        <button id="danmaku-send-btn" onclick="sendDanmaku()"
+          class="danmaku-send-btn h-8 px-4 rounded-full text-[13px] font-semibold text-white shrink-0">
+          发送
+        </button>
+      </div>
+    </div>
+    <!-- Row 1 -->
+    <div class="danmaku-wrap mb-2">
+      <div class="danmaku-inner text-[13px] text-muted gap-12 inline-flex">
+        <span>🔥 这个会议纪要工具太好用了！</span>
+        <span>✨ 数据可视化生成器救了我的汇报！</span>
+        <span>👏 开发者们辛苦了～</span>
+        <span>🚀 期待更多工具上线！</span>
+        <span>💡 建议增加 AI 写作类工具</span>
+        <span>🎉 已连续用了三周，每天必开</span>
+        <span>⭐ 配色助手帮我省了一个小时！</span>
+        <span>🔥 这个会议纪要工具太好用了！</span>
+        <span>✨ 数据可视化生成器救了我的汇报！</span>
+        <span>👏 开发者们辛苦了～</span>
+        <span>🚀 期待更多工具上线！</span>
+        <span>💡 建议增加 AI 写作类工具</span>
+        <span>🎉 已连续用了三周，每天必开</span>
+        <span>⭐ 配色助手帮我省了一个小时！</span>
+      </div>
+    </div>
+    <!-- Row 2 (opposite direction) -->
+    <div class="danmaku-wrap">
+      <div class="danmaku-inner text-[13px] text-faint gap-12 inline-flex" style="animation-direction: reverse; animation-duration: 50s;">
+        <span>🎨 AI 配色工具帮我省了好多时间</span>
+        <span>📊 SQL 优化器真的能用，推荐！</span>
+        <span>🎮 故事生成器玩了一晚上停不下来</span>
+        <span>🌟 希望能有 API 接入方式</span>
+        <span>📝 PPT 大纲比我自己想的还好</span>
+        <span>💬 翻译润色助手中英互译超流畅</span>
+        <span>🎨 AI 配色工具帮我省了好多时间</span>
+        <span>📊 SQL 优化器真的能用，推荐！</span>
+        <span>🎮 故事生成器玩了一晚上停不下来</span>
+        <span>🌟 希望能有 API 接入方式</span>
+        <span>📝 PPT 大纲比我自己想的还好</span>
+        <span>💬 翻译润色助手中英互译超流畅</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="bg-[#030308] border-t border-border">
+    <div class="max-w-7xl mx-auto px-16 h-14 flex items-center">
+      <span class="text-[13px] text-[#3A3D5A]">© 2025 ToolHub &nbsp;·&nbsp; All rights reserved</span>
+      <span class="flex-1"></span>
+      <div class="flex items-center gap-6 text-[13px] text-[#3A3D5A]">
+        <a href="mailto:contact@toolhub.ai" class="hover:text-muted transition-colors">📧 contact@toolhub.ai</a>
+        <a href="#" class="hover:text-muted transition-colors">🐙 GitHub</a>
+        <a href="#" class="hover:text-muted transition-colors">💬 Discord</a>
+      </div>
+    </div>
+  </div>
+
+</footer>
+
+
+<!-- ═══════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════ -->
+<script>
+  const tabMap = {
+    office: 'panel-office',
+    data:   'panel-data',
+    fun:    'panel-fun',
+    art:    'panel-art',
+    tools:  'panel-tools',
+    other:  'panel-other',
+  };
+
+  function switchTab(key) {
+    // 隐藏所有面板
+    Object.values(tabMap).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    });
+
+    // 显示目标面板
+    const target = document.getElementById(tabMap[key]);
+    if (target) target.classList.add('active');
+
+    // 重置所有 tab 按钮样式
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.remove('active-tab', 'glow-border', 'bg-accent', 'text-white', 'font-semibold');
+      btn.classList.add('text-faint', 'font-medium');
+    });
+
+    // 激活当前 tab 按钮
+    const activeBtn = document.getElementById('tab-' + key);
+    if (activeBtn) {
+      activeBtn.classList.add('active-tab', 'glow-border', 'bg-accent', 'text-white', 'font-semibold');
+      activeBtn.classList.remove('text-faint', 'font-medium');
+    }
+  }
+
+  // ── Danmaku send ──────────────────────────
+  const danmakuEmojis = ['✨','🔥','💬','🎉','👋','💡','🌟','🎊','😄','👍','🚀','🎶'];
+
+  function sendDanmaku() {
+    const input = document.getElementById('danmaku-input');
+    const btn   = document.getElementById('danmaku-send-btn');
+    const text  = input.value.trim();
+    if (!text) { input.focus(); return; }
+
+    const emoji   = danmakuEmojis[Math.floor(Math.random() * danmakuEmojis.length)];
+    const content = emoji + ' ' + text;
+
+    // Append to both scrolling rows (twice each to keep seamless loop)
+    document.querySelectorAll('.danmaku-inner').forEach(row => {
+      for (let i = 0; i < 2; i++) {
+        const span = document.createElement('span');
+        span.textContent = content;
+        span.style.color = '#c4b5fd';   // highlight user messages
+        span.style.fontWeight = '600';
+        row.appendChild(span);
+      }
+    });
+
+    // Button feedback
+    input.value = '';
+    btn.textContent = '✅ 已发送';
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.textContent = '发送';
+      btn.disabled = false;
+      input.focus();
+    }, 1500);
+  }
+</script>
+
+</body>
+</html>
