@@ -569,6 +569,19 @@
           <input id="f-author" type="text" class="modal-input" placeholder="你的名字或昵称" maxlength="30" required />
         </div>
 
+        <div class="modal-field">
+          <label>工具类别<span class="req">*</span></label>
+          <select id="f-category" class="modal-input" required style="cursor:pointer;">
+            <option value="">请选择分类…</option>
+            <option value="办公工具">💼 办公工具</option>
+            <option value="数据工具">📊 数据工具</option>
+            <option value="趣味工具">🎮 趣味工具</option>
+            <option value="艺术创作">🎨 艺术创作</option>
+            <option value="效率工具">⚡ 效率工具</option>
+            <option value="其他">🔮 其他</option>
+          </select>
+        </div>
+
       </div>
 
       <!-- Error hint -->
@@ -1538,7 +1551,7 @@
     document.getElementById('submit-btn').textContent = '提交审核';
     document.getElementById('submit-btn').disabled = false;
     // Clear fields
-    ['f-name','f-desc','f-url','f-author'].forEach(id => {
+    ['f-name','f-desc','f-url','f-author','f-category'].forEach(id => {
       document.getElementById(id).value = '';
     });
     document.getElementById('desc-counter').textContent = '0 / 100';
@@ -1564,18 +1577,20 @@
     el.className = 'char-counter' + (len > 100 ? ' over' : len >= 85 ? ' warn' : '');
   }
 
-  const FEISHU_WEBHOOK = 'https://open.feishu.cn/open-apis/bot/v2/hook/04696332-5d18-4bec-b686-3ad0e4c551ec';
+  const FEISHU_WEBHOOK  = 'https://open.feishu.cn/open-apis/bot/v2/hook/04696332-5d18-4bec-b686-3ad0e4c551ec';
+  const BITABLE_WEBHOOK = 'https://mi.feishu.cn/base/automation/webhook/event/TzHZamvHYw4md5h42DRc9vEFnge';
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const name   = document.getElementById('f-name').value.trim();
-    const desc   = document.getElementById('f-desc').value.trim();
-    const url    = document.getElementById('f-url').value.trim();
-    const author = document.getElementById('f-author').value.trim();
-    const errEl  = document.getElementById('form-error');
+    const name     = document.getElementById('f-name').value.trim();
+    const desc     = document.getElementById('f-desc').value.trim();
+    const url      = document.getElementById('f-url').value.trim();
+    const author   = document.getElementById('f-author').value.trim();
+    const category = document.getElementById('f-category').value;
+    const errEl    = document.getElementById('form-error');
 
     // Validation
-    if (!name || !desc || !url || !author) {
+    if (!name || !desc || !url || !author || !category) {
       errEl.textContent = '请填写所有必填项';
       errEl.style.display = 'block';
       return;
@@ -1605,6 +1620,7 @@
           '📬 ToolHub 新工具提交 · 待审核',
           '────────────────',
           `🔧 工具名称：${name}`,
+          `🗂 工具类别：${category}`,
           `👤 开发者：${author}`,
           `🔗 工具链接：${url}`,
           `📝 工具简介：${desc}`,
@@ -1642,6 +1658,20 @@
         return;
       }
     }
+
+    // 写入多维表格（fire-and-forget，不阻断流程）
+    fetch(BITABLE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, desc, url, author, category, time: now })
+    }).catch(() => {
+      fetch(BITABLE_WEBHOOK, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify({ name, desc, url, author, category, time: now })
+      }).catch(() => {});
+    });
 
     document.getElementById('submit-form').style.display = 'none';
     document.getElementById('submit-success').classList.add('show');
