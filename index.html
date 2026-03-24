@@ -421,6 +421,98 @@
       transform: translate(-50%, -50%) rotate(-30deg) scale(1.2);
       filter: drop-shadow(0 0 10px rgba(255,100,0,0.9));
     }
+
+    /* ── Submit Modal ── */
+    #submit-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+    #submit-modal.open { display: flex; }
+
+    #submit-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(4, 4, 18, 0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    #submit-modal-box {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 16px;
+      background: rgba(14, 15, 36, 0.88);
+      backdrop-filter: blur(32px) saturate(160%);
+      -webkit-backdrop-filter: blur(32px) saturate(160%);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow:
+        0 24px 64px rgba(0,0,0,0.55),
+        inset 0 1px 0 rgba(255,255,255,0.10);
+      border-radius: 20px;
+      padding: 32px;
+      animation: modal-in 0.22s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes modal-in {
+      from { opacity: 0; transform: scale(0.92) translateY(12px); }
+      to   { opacity: 1; transform: scale(1)    translateY(0);    }
+    }
+
+    .modal-field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #8B8FA8;
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+    }
+    .modal-field label span.req { color: #8B7FFF; margin-left: 2px; }
+
+    .modal-input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.18s, box-shadow 0.18s;
+      box-sizing: border-box;
+    }
+    .modal-input::placeholder { color: #4A4D6A; }
+    .modal-input:focus {
+      outline: none;
+      border-color: rgba(139,127,255,0.6);
+      box-shadow: 0 0 0 3px rgba(91,79,232,0.15);
+    }
+    textarea.modal-input { resize: none; line-height: 1.55; }
+
+    .char-counter {
+      font-size: 12px;
+      color: #4A4D6A;
+      text-align: right;
+      margin-top: 4px;
+      transition: color 0.15s;
+    }
+    .char-counter.warn { color: #f59e0b; }
+    .char-counter.over { color: #ef4444; }
+
+    /* Success state */
+    #submit-success {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0 8px;
+      text-align: center;
+    }
+    #submit-success.show { display: flex; }
   </style>
 </head>
 
@@ -430,6 +522,87 @@
 <div id="bomb-cursor">💣</div>
 <!-- Screen flash overlay -->
 <div id="screen-flash"></div>
+
+<!-- ═══════════════════════════════════════
+     SUBMIT TOOL MODAL
+═══════════════════════════════════════ -->
+<div id="submit-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div id="submit-modal-backdrop" onclick="closeSubmitModal()"></div>
+  <div id="submit-modal-box">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <div>
+        <h2 id="modal-title" style="font-size:20px;font-weight:800;color:#fff;margin:0 0 4px;">🛠️ 提交你的工具</h2>
+        <p style="font-size:13px;color:#6B6F8A;margin:0;">审核通过后自动上架到工具广场</p>
+      </div>
+      <button onclick="closeSubmitModal()"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#8B8FA8;font-size:16px;transition:background 0.15s;"
+              onmouseover="this.style.background='rgba(255,255,255,0.12)'"
+              onmouseout="this.style.background='rgba(255,255,255,0.06)'"
+              aria-label="关闭">✕</button>
+    </div>
+
+    <!-- Form -->
+    <form id="submit-form" onsubmit="handleSubmit(event)" novalidate>
+      <div style="display:flex;flex-direction:column;gap:18px;">
+
+        <div class="modal-field">
+          <label>工具名称<span class="req">*</span></label>
+          <input id="f-name" type="text" class="modal-input" placeholder="例：AI 会议纪要助手" maxlength="40" required />
+        </div>
+
+        <div class="modal-field">
+          <label>工具简介<span class="req">*</span></label>
+          <textarea id="f-desc" class="modal-input" rows="3" placeholder="一句话描述工具的核心功能与亮点…" maxlength="100" required
+                    oninput="updateCounter(this,'desc-counter')"></textarea>
+          <div id="desc-counter" class="char-counter">0 / 100</div>
+        </div>
+
+        <div class="modal-field">
+          <label>工具链接<span class="req">*</span></label>
+          <input id="f-url" type="url" class="modal-input" placeholder="https://your-tool.example.com" required />
+        </div>
+
+        <div class="modal-field">
+          <label>开发者名称<span class="req">*</span></label>
+          <input id="f-author" type="text" class="modal-input" placeholder="你的名字或昵称" maxlength="30" required />
+        </div>
+
+      </div>
+
+      <!-- Error hint -->
+      <p id="form-error" style="font-size:12px;color:#ef4444;margin:14px 0 0;display:none;"></p>
+
+      <!-- Submit btn -->
+      <button type="submit" id="submit-btn"
+              style="margin-top:22px;width:100%;height:48px;border-radius:12px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;border:none;
+                     background:linear-gradient(160deg,rgba(160,148,255,0.72) 0%,rgba(100,88,232,0.60) 45%,rgba(78,64,210,0.68) 100%);
+                     backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+                     border:1px solid rgba(180,168,255,0.40);
+                     box-shadow:0 8px 28px rgba(91,79,232,0.38),inset 0 1.5px 0 rgba(255,255,255,0.28);
+                     transition:filter 0.2s;">
+        提交审核
+      </button>
+    </form>
+
+    <!-- Success state -->
+    <div id="submit-success">
+      <div style="width:64px;height:64px;border-radius:50%;background:rgba(91,79,232,0.15);border:2px solid rgba(139,127,255,0.4);display:flex;align-items:center;justify-content:center;font-size:28px;">✅</div>
+      <div>
+        <h3 style="font-size:18px;font-weight:700;color:#fff;margin:0 0 6px;">提交成功！</h3>
+        <p style="font-size:14px;color:#8B8FA8;margin:0;line-height:1.6;">你的工具已进入审核队列<br>审核通过后将自动上架到工具广场 🎉</p>
+      </div>
+      <button onclick="closeSubmitModal()"
+              style="margin-top:4px;padding:10px 32px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#8B8FA8;font-size:14px;font-weight:600;cursor:pointer;transition:background 0.15s;"
+              onmouseover="this.style.background='rgba(255,255,255,0.12)'"
+              onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+        好的，关闭
+      </button>
+    </div>
+
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════
      NAVBAR
@@ -452,10 +625,10 @@
     </div>
 
     <!-- CTA -->
-    <a href="#submit"
-       class="ml-6 px-5 h-[38px] bg-accent hover:bg-[#6D62F0] rounded-full text-[14px] font-semibold text-white flex items-center transition-colors shrink-0">
+    <button onclick="openSubmitModal()"
+            class="ml-6 px-5 h-[38px] bg-accent hover:bg-[#6D62F0] rounded-full text-[14px] font-semibold text-white flex items-center transition-colors shrink-0">
       提交工具 +
-    </a>
+    </button>
   </div>
 </nav>
 
@@ -499,10 +672,10 @@
          class="hero-btn ios-glass-primary px-8 h-[52px] rounded-full text-[16px] font-semibold text-white flex items-center">
         浏览工具广场
       </a>
-      <a href="#submit"
-         class="hero-btn ios-glass-secondary px-8 h-[52px] rounded-full text-[16px] font-medium text-[#C8C4E8] flex items-center">
+      <button onclick="openSubmitModal()"
+              class="hero-btn ios-glass-secondary px-8 h-[52px] rounded-full text-[16px] font-medium text-[#C8C4E8] flex items-center">
         提交我的工具
-      </a>
+      </button>
     </div>
 
   </div>
@@ -966,10 +1139,10 @@
         <h4 class="text-[26px] font-extrabold text-white">🛠️&nbsp; 你也有创意工具？加入我们！</h4>
         <p class="text-[15px] text-muted">向社区分享你的 AI 小工具，让更多开发者和用户受益</p>
       </div>
-      <a href="mailto:contact@toolhub.ai"
-         class="ios-glass-submit px-7 h-12 rounded-full text-[15px] font-bold text-white flex items-center shrink-0">
+      <button onclick="openSubmitModal()"
+              class="ios-glass-submit px-7 h-12 rounded-full text-[15px] font-bold text-white flex items-center shrink-0">
         立即提交工具 →
-      </a>
+      </button>
     </div>
   </div>
 
@@ -1350,6 +1523,84 @@
       });
     });
   })();
+
+  // ══════════════════════════════════════════
+  //  SUBMIT MODAL
+  // ══════════════════════════════════════════
+  function openSubmitModal() {
+    const modal = document.getElementById('submit-modal');
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    // Reset to form state
+    document.getElementById('submit-form').style.display = '';
+    document.getElementById('submit-success').classList.remove('show');
+    document.getElementById('form-error').style.display = 'none';
+    document.getElementById('submit-btn').textContent = '提交审核';
+    document.getElementById('submit-btn').disabled = false;
+    // Clear fields
+    ['f-name','f-desc','f-url','f-author'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('desc-counter').textContent = '0 / 100';
+    document.getElementById('desc-counter').className = 'char-counter';
+    // Focus first field
+    setTimeout(() => document.getElementById('f-name').focus(), 80);
+  }
+
+  function closeSubmitModal() {
+    document.getElementById('submit-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Close on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSubmitModal();
+  });
+
+  function updateCounter(textarea, counterId) {
+    const len = [...textarea.value].length; // Unicode-safe
+    const el = document.getElementById(counterId);
+    el.textContent = len + ' / 100';
+    el.className = 'char-counter' + (len > 100 ? ' over' : len >= 85 ? ' warn' : '');
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const name   = document.getElementById('f-name').value.trim();
+    const desc   = document.getElementById('f-desc').value.trim();
+    const url    = document.getElementById('f-url').value.trim();
+    const author = document.getElementById('f-author').value.trim();
+    const errEl  = document.getElementById('form-error');
+
+    // Validation
+    if (!name || !desc || !url || !author) {
+      errEl.textContent = '请填写所有必填项';
+      errEl.style.display = 'block';
+      return;
+    }
+    if ([...desc].length > 100) {
+      errEl.textContent = '工具简介不能超过 100 字';
+      errEl.style.display = 'block';
+      return;
+    }
+    try { new URL(url); } catch (_) {
+      errEl.textContent = '工具链接格式不正确，请以 https:// 开头';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    errEl.style.display = 'none';
+
+    // Simulate submit (loading state)
+    const btn = document.getElementById('submit-btn');
+    btn.textContent = '提交中…';
+    btn.disabled = true;
+
+    setTimeout(() => {
+      document.getElementById('submit-form').style.display = 'none';
+      document.getElementById('submit-success').classList.add('show');
+    }, 800);
+  }
 </script>
 
 </body>
