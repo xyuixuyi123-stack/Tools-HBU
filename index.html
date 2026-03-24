@@ -1564,7 +1564,9 @@
     el.className = 'char-counter' + (len > 100 ? ' over' : len >= 85 ? ' warn' : '');
   }
 
-  function handleSubmit(e) {
+  const FEISHU_WEBHOOK = 'https://open.feishu.cn/open-apis/bot/v2/hook/04696332-5d18-4bec-b686-3ad0e4c551ec';
+
+  async function handleSubmit(e) {
     e.preventDefault();
     const name   = document.getElementById('f-name').value.trim();
     const desc   = document.getElementById('f-desc').value.trim();
@@ -1590,16 +1592,59 @@
     }
 
     errEl.style.display = 'none';
-
-    // Simulate submit (loading state)
     const btn = document.getElementById('submit-btn');
     btn.textContent = '提交中…';
     btn.disabled = true;
 
-    setTimeout(() => {
-      document.getElementById('submit-form').style.display = 'none';
-      document.getElementById('submit-success').classList.add('show');
-    }, 800);
+    // 飞书文本消息（最兼容格式）
+    const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    const payload = {
+      msg_type: 'text',
+      content: {
+        text: [
+          '📬 ToolHub 新工具提交 · 待审核',
+          '────────────────',
+          `🔧 工具名称：${name}`,
+          `👤 开发者：${author}`,
+          `🔗 工具链接：${url}`,
+          `📝 工具简介：${desc}`,
+          `🕐 提交时间：${now}`
+        ].join('\n')
+      }
+    };
+
+    // 先尝试正常发送（可读响应），失败后用 no-cors 强制发出（忽略响应）
+    let webhookOk = false;
+    try {
+      const res = await fetch(FEISHU_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      webhookOk = (data.code === 0 || data.StatusCode === 0 || res.ok);
+    } catch (_) {
+      // CORS（file:// 打开时）—— 改用 no-cors + text/plain 绕过预检
+      try {
+        await fetch(FEISHU_WEBHOOK, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          body: JSON.stringify(payload)
+        });
+        webhookOk = true; // no-cors 无法读响应，假定成功
+      } catch (err2) {
+        console.error('飞书通知发送失败：', err2.message);
+        errEl.textContent = `发送飞书通知失败（${err2.message}）。请检查网络连接后重试。`;
+        errEl.style.display = 'block';
+        btn.textContent = '提交审核';
+        btn.disabled = false;
+        return;
+      }
+    }
+
+    document.getElementById('submit-form').style.display = 'none';
+    document.getElementById('submit-success').classList.add('show');
   }
 </script>
 
