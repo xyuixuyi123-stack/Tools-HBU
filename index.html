@@ -280,12 +280,32 @@
     }
 
     /* Danmaku scroll */
+    .danmaku-zone { position: relative; overflow: hidden; }
     .danmaku-wrap { overflow: hidden; white-space: nowrap; }
     .danmaku-inner {
       display: inline-block;
       animation: marquee 40s linear infinite;
     }
     .danmaku-inner:hover { animation-play-state: paused; }
+    /* Live user message — slides across immediately on send */
+    @keyframes danmaku-live-slide {
+      from { transform: translateX(110%); }
+      to   { transform: translateX(-110%); }
+    }
+    .danmaku-live {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      transform: translateY(-50%);
+      white-space: nowrap;
+      font-size: 13px;
+      font-weight: 700;
+      color: #e9d5ff;
+      text-shadow: 0 0 8px rgba(192,132,252,0.8), 0 0 16px rgba(139,127,255,0.5);
+      pointer-events: none;
+      animation: danmaku-live-slide 5s linear forwards;
+      z-index: 10;
+    }
     @keyframes marquee {
       0%   { transform: translateX(0); }
       100% { transform: translateX(-50%); }
@@ -873,7 +893,7 @@
 <!-- ═══════════════════════════════════════
      DANMAKU — between hero and tool showcase
 ═══════════════════════════════════════ -->
-<div class="bg-[#0B0B18] border-t border-b border-border py-4 px-0">
+<div id="danmaku-zone" class="danmaku-zone bg-[#0B0B18] border-t border-b border-border py-4 px-0">
   <div class="flex items-center gap-3 px-8 mb-3">
     <span class="text-base">💬</span>
     <span class="text-[13px] font-semibold text-purple">实时弹幕</span>
@@ -1641,18 +1661,27 @@
     const emoji   = danmakuEmojis[Math.floor(Math.random() * danmakuEmojis.length)];
     const content = emoji + ' ' + text;
 
-    // Append to both scrolling rows (twice each to keep seamless loop)
+    // 1. 立即横扫：创建浮动高亮消息从右往左划过
+    const zone = document.getElementById('danmaku-zone');
+    const live = document.createElement('span');
+    live.className = 'danmaku-live';
+    live.textContent = content;
+    zone.appendChild(live);
+    live.addEventListener('animationend', () => live.remove());
+
+    // 2. prepend 到滚动列前端（下一轮循环最先出现）
     document.querySelectorAll('.danmaku-inner').forEach(row => {
       for (let i = 0; i < 2; i++) {
         const span = document.createElement('span');
         span.textContent = content;
-        span.style.color = '#c4b5fd';   // highlight user messages
-        span.style.fontWeight = '600';
-        row.appendChild(span);
+        span.style.color = '#e9d5ff';
+        span.style.fontWeight = '700';
+        span.style.textShadow = '0 0 6px rgba(192,132,252,0.6)';
+        row.prepend(span);
       }
     });
 
-    // Button feedback
+    // 3. 按钮反馈
     input.value = '';
     btn.textContent = '✅ 已发送';
     btn.disabled = true;
