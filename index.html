@@ -43,8 +43,6 @@
       transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s;
     }
     .tool-card:hover {
-      border-color: #5B4FE8 !important;
-      box-shadow: 0 0 28px rgba(91, 79, 232, 0.22);
       transform: translateY(-3px);
     }
 
@@ -236,20 +234,49 @@
         inset 0 -1px  0 rgba(0, 0, 0, 0.18);
     }
 
+    /* Sticky tab bar under nav */
+    .sticky-tabbar {
+      position: sticky;
+      top: 72px;
+      z-index: 40;
+      background: rgba(8, 8, 26, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(42, 43, 69, 0.6);
+    }
 
-
-    /* Tab transition */
-    .tab-panel { display: none; }
-    .tab-panel.active {
+    /* Section grid */
+    .category-section { margin-bottom: 56px; }
+    .category-section:last-child { margin-bottom: 0; }
+    .tool-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 1.5rem;
     }
     @media (min-width: 768px) {
-      .tab-panel.active { grid-template-columns: repeat(2, 1fr); }
+      .tool-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (min-width: 1024px) {
-      .tab-panel.active { grid-template-columns: repeat(3, 1fr); }
+      .tool-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* Section title */
+    .section-title-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .section-title-row h4 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .section-title-row .title-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(42,43,69,0.9) 0%, transparent 100%);
     }
 
     /* Danmaku scroll */
@@ -274,6 +301,45 @@
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #08081A; }
     ::-webkit-scrollbar-thumb { background: #2A2B45; border-radius: 3px; }
+
+    /* ── Hero button selected-state on hover ── */
+    .hero-btn {
+      position: relative;
+      z-index: 0;
+    }
+    .hero-btn::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: inherit;
+      background: conic-gradient(
+        from var(--glow-angle, 0deg),
+        transparent 0%,
+        #5B4FE8 10%,
+        #8B7FFF 20%,
+        #c084fc 30%,
+        transparent 40%,
+        transparent 100%
+      );
+      animation: glow-spin 2.5s linear infinite;
+      z-index: -2;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .hero-btn:hover::before { opacity: 1; }
+
+    /* ── Card border particles ── */
+    @keyframes border-particle-fly {
+      0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+      100% { opacity: 0; transform: translate(var(--bpx), var(--bpy)) scale(0); }
+    }
+    .border-particle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9994;
+      border-radius: 50%;
+      animation: border-particle-fly 1.2s ease-out forwards;
+    }
 
     /* ── Bomb Cursor ── */
     #bomb-cursor {
@@ -430,11 +496,11 @@
     <!-- CTAs -->
     <div class="flex items-center gap-4 mt-1">
       <a href="#tools"
-         class="ios-glass-primary px-8 h-[52px] rounded-full text-[16px] font-semibold text-white flex items-center">
+         class="hero-btn ios-glass-primary px-8 h-[52px] rounded-full text-[16px] font-semibold text-white flex items-center">
         浏览工具广场
       </a>
       <a href="#submit"
-         class="ios-glass-secondary px-8 h-[52px] rounded-full text-[16px] font-medium text-[#C8C4E8] flex items-center">
+         class="hero-btn ios-glass-secondary px-8 h-[52px] rounded-full text-[16px] font-medium text-[#C8C4E8] flex items-center">
         提交我的工具
       </a>
     </div>
@@ -444,128 +510,143 @@
 
 
 <!-- ═══════════════════════════════════════
-     TOOL SHOWCASE
+     TOOL SHOWCASE — section header + sticky tab bar
 ═══════════════════════════════════════ -->
-<section id="tools" class="max-w-7xl mx-auto px-16 py-16">
-
-  <!-- Section header -->
-  <div class="flex items-baseline gap-4 mb-8">
+<div id="tools" class="max-w-7xl mx-auto px-16 pt-16 pb-4">
+  <div class="flex items-baseline gap-4">
     <h3 class="text-[32px] font-extrabold text-white">AI 创意工具广场</h3>
     <span class="text-[14px] text-faint">精选开发者提交的优质工具</span>
   </div>
+</div>
 
-  <!-- Tab bar -->
-  <div class="flex items-center gap-1 ios-glass-tabbar border rounded-[14px] p-1 mb-8 overflow-x-auto">
-    <button onclick="switchTab('office')"
-            id="tab-office"
-            class="tab-btn active-tab glow-border shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-semibold text-white bg-accent transition-all">
-      💼 办公工具
-    </button>
-    <button onclick="switchTab('data')"
-            id="tab-data"
-            class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
-      📊 数据相关
-    </button>
-    <button onclick="switchTab('fun')"
-            id="tab-fun"
-            class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
-      🎮 休闲娱乐
-    </button>
-    <button onclick="switchTab('art')"
-            id="tab-art"
-            class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
-      🎨 艺术设计
-    </button>
-    <button onclick="switchTab('tools')"
-            id="tab-tools"
-            class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
-      🔧 便利小工具
-    </button>
-    <button onclick="switchTab('other')"
-            id="tab-other"
-            class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
-      📦 其他
-    </button>
+<!-- Sticky tab bar -->
+<div class="sticky-tabbar">
+  <div class="max-w-7xl mx-auto px-16 py-2">
+    <div class="flex items-center gap-1 ios-glass-tabbar border rounded-[14px] p-1 overflow-x-auto">
+      <button onclick="scrollToSection('office')"
+              id="tab-office"
+              class="tab-btn active-tab glow-border shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-semibold text-white bg-accent transition-all">
+        💼 办公工具
+      </button>
+      <button onclick="scrollToSection('data')"
+              id="tab-data"
+              class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
+        📊 数据相关
+      </button>
+      <button onclick="scrollToSection('fun')"
+              id="tab-fun"
+              class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
+        🎮 休闲娱乐
+      </button>
+      <button onclick="scrollToSection('art')"
+              id="tab-art"
+              class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
+        🎨 艺术设计
+      </button>
+      <button onclick="scrollToSection('tools')"
+              id="tab-tools"
+              class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
+        🔧 便利小工具
+      </button>
+      <button onclick="scrollToSection('other')"
+              id="tab-other"
+              class="tab-btn shrink-0 px-5 h-11 rounded-[10px] text-[14px] font-medium text-faint hover:text-white hover:bg-white/5 transition-all">
+        📦 其他
+      </button>
+    </div>
   </div>
+</div>
+
+<section class="max-w-7xl mx-auto px-16 py-10">
 
   <!-- ── 办公工具 ── -->
-  <div id="panel-office" class="tab-panel active">
-    <!-- card -->
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📝</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-accent/20 border border-accent text-purple w-fit">办公工具</span>
-        <h4 class="text-[16px] font-bold text-white">AI 会议纪要助手</h4>
-        <p class="text-[13px] text-muted">一键生成会议摘要与待办事项，支持多种格式导出</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者A</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.8</span>
+  <div id="section-office" class="category-section">
+    <div class="section-title-row">
+      <h4>💼 办公工具</h4>
+      <div class="title-line"></div>
+    </div>
+    <div class="tool-grid">
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📝</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-accent/20 border border-accent text-purple w-fit">办公工具</span>
+          <h4 class="text-[16px] font-bold text-white">AI 会议纪要助手</h4>
+          <p class="text-[13px] text-muted">一键生成会议摘要与待办事项，支持多种格式导出</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者A</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.8</span>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📧</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-accent/20 border border-accent text-purple w-fit">办公工具</span>
-        <h4 class="text-[16px] font-bold text-white">智能邮件起草器</h4>
-        <p class="text-[13px] text-muted">输入要点，AI 帮你生成专业商务邮件，支持多种语气</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者B</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.7</span>
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📧</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-accent/20 border border-accent text-purple w-fit">办公工具</span>
+          <h4 class="text-[16px] font-bold text-white">智能邮件起草器</h4>
+          <p class="text-[13px] text-muted">输入要点，AI 帮你生成专业商务邮件，支持多种语气</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者B</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.7</span>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📊</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-accent/20 border border-accent text-purple w-fit">办公工具</span>
-        <h4 class="text-[16px] font-bold text-white">PPT 大纲生成器</h4>
-        <p class="text-[13px] text-muted">描述主题，自动生成完整演示文稿框架与内容要点</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者C</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.9</span>
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📊</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-accent/20 border border-accent text-purple w-fit">办公工具</span>
+          <h4 class="text-[16px] font-bold text-white">PPT 大纲生成器</h4>
+          <p class="text-[13px] text-muted">描述主题，自动生成完整演示文稿框架与内容要点</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者C</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.9</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- ── 数据相关 ── -->
-  <div id="panel-data" class="tab-panel">
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📈</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 border border-emerald-500 text-emerald-400 w-fit">数据相关</span>
-        <h4 class="text-[16px] font-bold text-white">数据可视化生成器</h4>
-        <p class="text-[13px] text-muted">粘贴数据，自动生成折线图、柱状图、饼图等多种可视化</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者D</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.6</span>
+  <div id="section-data" class="category-section">
+    <div class="section-title-row">
+      <h4>📊 数据相关</h4>
+      <div class="title-line"></div>
+    </div>
+    <div class="tool-grid">
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📈</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 border border-emerald-500 text-emerald-400 w-fit">数据相关</span>
+          <h4 class="text-[16px] font-bold text-white">数据可视化生成器</h4>
+          <p class="text-[13px] text-muted">粘贴数据，自动生成折线图、柱状图、饼图等多种可视化</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者D</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.6</span>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🗄️</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 border border-emerald-500 text-emerald-400 w-fit">数据相关</span>
-        <h4 class="text-[16px] font-bold text-white">SQL 查询优化器</h4>
-        <p class="text-[13px] text-muted">粘贴 SQL，AI 自动分析瓶颈并给出优化建议与重写方案</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者E</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.5</span>
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🗄️</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 border border-emerald-500 text-emerald-400 w-fit">数据相关</span>
+          <h4 class="text-[16px] font-bold text-white">SQL 查询优化器</h4>
+          <p class="text-[13px] text-muted">粘贴 SQL，AI 自动分析瓶颈并给出优化建议与重写方案</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者E</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.5</span>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🧹</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 border border-emerald-500 text-emerald-400 w-fit">数据相关</span>
-        <h4 class="text-[16px] font-bold text-white">数据清洗助手</h4>
-        <p class="text-[13px] text-muted">上传表格，快速识别重复、缺失、格式异常等数据问题</p>
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🧹</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 border border-emerald-500 text-emerald-400 w-fit">数据相关</span>
+          <h4 class="text-[16px] font-bold text-white">数据清洗助手</h4>
+          <p class="text-[13px] text-muted">上传表格，快速识别重复、缺失、格式异常等数据问题</p>
         <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
           <span class="text-[12px] text-faint">👤 开发者F</span>
           <span class="flex-1"></span>
@@ -574,275 +655,297 @@
       </div>
     </div>
   </div>
+  </div>
 
   <!-- ── 休闲娱乐 ── -->
-  <div id="panel-fun" class="tab-panel">
-    <!-- ── 真实工具 ── -->
-    <a href="https://velvety-pixie-9a02fa.netlify.app/" target="_blank" rel="noopener noreferrer"
-       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🎭</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
-        <h4 class="text-[16px] font-bold text-white">番剧灵魂 MBTI 测试</h4>
-        <p class="text-[13px] text-muted">漫人物 × 16 型人格精准绑定，找到与你同频的动漫角色，强化身份认同与社交共鸣</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 MICC</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
-        </div>
-      </div>
-    </a>
-    <a href="https://blancheeeee.github.io/Piano-Demo/" target="_blank" rel="noopener noreferrer"
-       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🎹</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
-        <h4 class="text-[16px] font-bold text-white">简易键盘钢琴谱</h4>
-        <p class="text-[13px] text-muted">键盘三排字母对应三组音区，零学习成本弹奏《小星星》，随时捕捉音乐灵感</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 MICC</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
-        </div>
-      </div>
-    </a>
-    <a href="https://glowing-truffle-529a80.netlify.app/" target="_blank" rel="noopener noreferrer"
-       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🖼️</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
-        <h4 class="text-[16px] font-bold text-white">世界名画翻翻乐</h4>
-        <p class="text-[13px] text-muted">以达芬奇、梵高、莫奈等大师名作为主题的翻牌配对游戏，通关后附赠画作赏析</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 MICC</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
-        </div>
-      </div>
-    </a>
-    <a href="https://zhuoba1999-art.github.io/mood-cocktail/" target="_blank" rel="noopener noreferrer"
-       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🍹</div>
-      <div class="p-4 flex flex-col gap-2">
-        <div class="flex items-center gap-2 flex-wrap">
+  <div id="section-fun" class="category-section">
+    <div class="section-title-row">
+      <h4>🎮 休闲娱乐</h4>
+      <div class="title-line"></div>
+    </div>
+    <div class="tool-grid">
+      <a href="https://velvety-pixie-9a02fa.netlify.app/" target="_blank" rel="noopener noreferrer"
+         class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🎭</div>
+        <div class="p-4 flex flex-col gap-2">
           <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
-          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/20 border border-red-500 text-red-400 w-fit">🪜 需要 VPN</span>
+          <h4 class="text-[16px] font-bold text-white">番剧灵魂 MBTI 测试</h4>
+          <p class="text-[13px] text-muted">漫人物 × 16 型人格精准绑定，找到与你同频的动漫角色，强化身份认同与社交共鸣</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 MICC</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+          </div>
         </div>
-        <h4 class="text-[16px] font-bold text-white">心情鸡尾酒调酒师</h4>
-        <p class="text-[13px] text-muted">根据你今天的心情，AI 为你调制一杯专属鸡尾酒，让我们微醺吧 🥃</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 MICC</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+      </a>
+      <a href="https://blancheeeee.github.io/Piano-Demo/" target="_blank" rel="noopener noreferrer"
+         class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🎹</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
+          <h4 class="text-[16px] font-bold text-white">简易键盘钢琴谱</h4>
+          <p class="text-[13px] text-muted">键盘三排字母对应三组音区，零学习成本弹奏《小星星》，随时捕捉音乐灵感</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 MICC</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+          </div>
         </div>
-      </div>
-    </a>
-    <a href="https://xyuixuyi123-stack.github.io/bbq-game/" target="_blank" rel="noopener noreferrer"
-       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🔥</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
-        <h4 class="text-[16px] font-bold text-white">BBQ 烧烤大排档</h4>
-        <p class="text-[13px] text-muted">化身烧烤摊店主，用心烤制美味满足形形色色的客人，感受市井烟火气与人间温暖</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 MICC</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+      </a>
+      <a href="https://glowing-truffle-529a80.netlify.app/" target="_blank" rel="noopener noreferrer"
+         class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🖼️</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
+          <h4 class="text-[16px] font-bold text-white">世界名画翻翻乐</h4>
+          <p class="text-[13px] text-muted">以达芬奇、梵高、莫奈等大师名作为主题的翻牌配对游戏，通关后附赠画作赏析</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 MICC</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+          </div>
         </div>
-      </div>
-    </a>
+      </a>
+      <a href="https://zhuoba1999-art.github.io/mood-cocktail/" target="_blank" rel="noopener noreferrer"
+         class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🍹</div>
+        <div class="p-4 flex flex-col gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
+            <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/20 border border-red-500 text-red-400 w-fit">🪜 需要 VPN</span>
+          </div>
+          <h4 class="text-[16px] font-bold text-white">心情鸡尾酒调酒师</h4>
+          <p class="text-[13px] text-muted">根据你今天的心情，AI 为你调制一杯专属鸡尾酒，让我们微醺吧 🥃</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 MICC</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+          </div>
+        </div>
+      </a>
+      <a href="https://xyuixuyi123-stack.github.io/bbq-game/" target="_blank" rel="noopener noreferrer"
+         class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🔥</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 border border-amber-500 text-amber-400 w-fit">休闲娱乐</span>
+          <h4 class="text-[16px] font-bold text-white">BBQ 烧烤大排档</h4>
+          <p class="text-[13px] text-muted">化身烧烤摊店主，用心烤制美味满足形形色色的客人，感受市井烟火气与人间温暖</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 MICC</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+          </div>
+        </div>
+      </a>
+    </div>
   </div>
 
   <!-- ── 艺术设计 ── -->
-  <div id="panel-art" class="tab-panel">
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🎨</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-pink-500/20 border border-pink-500 text-pink-400 w-fit">艺术设计</span>
-        <h4 class="text-[16px] font-bold text-white">AI 配色方案助手</h4>
-        <p class="text-[13px] text-muted">描述场景氛围，生成和谐专业的全套配色方案</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者J</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.7</span>
-        </div>
-      </div>
+  <div id="section-art" class="category-section">
+    <div class="section-title-row">
+      <h4>🎨 艺术设计</h4>
+      <div class="title-line"></div>
     </div>
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🔤</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-pink-500/20 border border-pink-500 text-pink-400 w-fit">艺术设计</span>
-        <h4 class="text-[16px] font-bold text-white">字体搭配推荐</h4>
-        <p class="text-[13px] text-muted">上传设计稿，AI 分析风格并推荐最佳字体组合方案</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者K</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.5</span>
+    <div class="tool-grid">
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🎨</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-pink-500/20 border border-pink-500 text-pink-400 w-fit">艺术设计</span>
+          <h4 class="text-[16px] font-bold text-white">AI 配色方案助手</h4>
+          <p class="text-[13px] text-muted">描述场景氛围，生成和谐专业的全套配色方案</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者J</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.7</span>
+          </div>
         </div>
       </div>
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🔤</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-pink-500/20 border border-pink-500 text-pink-400 w-fit">艺术设计</span>
+          <h4 class="text-[16px] font-bold text-white">字体搭配推荐</h4>
+          <p class="text-[13px] text-muted">上传设计稿，AI 分析风格并推荐最佳字体组合方案</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者K</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.5</span>
+          </div>
+        </div>
+      </div>
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">✏️</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-pink-500/20 border border-pink-500 text-pink-400 w-fit">艺术设计</span>
+          <h4 class="text-[16px] font-bold text-white">Logo 创意描述器</h4>
+          <p class="text-[13px] text-muted">描述品牌理念，生成详细的 Logo 设计方向与 Prompt</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者L</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.8</span>
+          </div>
+        </div>
+      </div>
+      <a href="https://colormoodmix.netlify.app/" target="_blank" rel="noopener noreferrer"
+         class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🌈</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-pink-500/20 border border-pink-500 text-pink-400 w-fit">艺术设计</span>
+          <h4 class="text-[16px] font-bold text-white">色彩情绪调色板</h4>
+          <p class="text-[13px] text-muted">通过混合三原色为"忧郁""欢乐"等情感调配色彩，十关挑战探索色彩与情绪的微妙关联</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 MICC</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+          </div>
+        </div>
+      </a>
     </div>
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">✏️</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-pink-500/20 border border-pink-500 text-pink-400 w-fit">艺术设计</span>
-        <h4 class="text-[16px] font-bold text-white">Logo 创意描述器</h4>
-        <p class="text-[13px] text-muted">描述品牌理念，生成详细的 Logo 设计方向与 Prompt</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者L</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.8</span>
-        </div>
-      </div>
-    </div>
-    <!-- ── 真实工具 ── -->
-    <a href="https://colormoodmix.netlify.app/" target="_blank" rel="noopener noreferrer"
-       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🌈</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-pink-500/20 border border-pink-500 text-pink-400 w-fit">艺术设计</span>
-        <h4 class="text-[16px] font-bold text-white">色彩情绪调色板</h4>
-        <p class="text-[13px] text-muted">通过混合三原色为"忧郁""欢乐"等情感调配色彩，十关挑战探索色彩与情绪的微妙关联</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 MICC</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
-        </div>
-      </div>
-    </a>
   </div>
 
   <!-- ── 便利小工具 ── -->
-  <div id="panel-tools" class="tab-panel">
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">✂️</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
-        <h4 class="text-[16px] font-bold text-white">智能文本压缩工具</h4>
-        <p class="text-[13px] text-muted">长文一键提炼核心内容，支持自定义压缩比例与风格</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者M</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.5</span>
-        </div>
-      </div>
+  <div id="section-tools" class="category-section">
+    <div class="section-title-row">
+      <h4>🔧 便利小工具</h4>
+      <div class="title-line"></div>
     </div>
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🌐</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
-        <h4 class="text-[16px] font-bold text-white">翻译润色助手</h4>
-        <p class="text-[13px] text-muted">翻译的同时提升表达质量，支持中英日韩等十余种语言</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者N</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.8</span>
-        </div>
-      </div>
-    </div>
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🕐</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
-        <h4 class="text-[16px] font-bold text-white">时区会议助手</h4>
-        <p class="text-[13px] text-muted">多城市时区智能换算，一键找到全员都合适的会议时段</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者O</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.6</span>
-        </div>
-      </div>
-    </div>
-    <!-- ── 真实工具 ── -->
-    <a href="https://twitter-video-downloader-nine.vercel.app/" target="_blank" rel="noopener noreferrer"
-       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📥</div>
-      <div class="p-4 flex flex-col gap-2">
-        <div class="flex items-center gap-2 flex-wrap">
+    <div class="tool-grid">
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">✂️</div>
+        <div class="p-4 flex flex-col gap-2">
           <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
-          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/20 border border-red-500 text-red-400 w-fit">🪜 需要翻墙</span>
-        </div>
-        <h4 class="text-[16px] font-bold text-white">X 视频下载工具</h4>
-        <p class="text-[13px] text-muted">免会员下载 X (Twitter) 视频，支持选择分辨率与多链接批量下载，手机 &amp; Web 端已适配</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 MICC</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
-        </div>
-      </div>
-    </a>
-    <a href="https://daqianli.github.io/aodclock-landing/" target="_blank" rel="noopener noreferrer"
-       class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">⏰</div>
-      <div class="p-4 flex flex-col gap-2">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
-          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-500/20 border border-sky-500 text-sky-400 w-fit">📱 iOS 已上架</span>
-        </div>
-        <h4 class="text-[16px] font-bold text-white">AODclock 息屏时钟</h4>
-        <p class="text-[13px] text-muted">为没有 Always-On Display 的 iPad mini 打造，优雅的息屏时钟应用，iOS 已上架 / 安卓 APK 可下载</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 MICC</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+          <h4 class="text-[16px] font-bold text-white">智能文本压缩工具</h4>
+          <p class="text-[13px] text-muted">长文一键提炼核心内容，支持自定义压缩比例与风格</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者M</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.5</span>
+          </div>
         </div>
       </div>
-    </a>
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden opacity-70">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🌸</div>
-      <div class="p-4 flex flex-col gap-2">
-        <div class="flex items-center gap-2 flex-wrap">
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🌐</div>
+        <div class="p-4 flex flex-col gap-2">
           <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
-          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-yellow-500/20 border border-yellow-500 text-yellow-400 w-fit">⏳ 审核中</span>
+          <h4 class="text-[16px] font-bold text-white">翻译润色助手</h4>
+          <p class="text-[13px] text-muted">翻译的同时提升表达质量，支持中英日韩等十余种语言</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者N</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.8</span>
+          </div>
         </div>
-        <h4 class="text-[16px] font-bold text-white">花粉浓度查询小程序</h4>
-        <p class="text-[13px] text-muted">鼻炎患者必备！基于植被测算的花粉浓度实时查询，接入开放 API，聊胜于无但真的有用</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 MICC</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-faint">即将上线</span>
+      </div>
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🕐</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
+          <h4 class="text-[16px] font-bold text-white">时区会议助手</h4>
+          <p class="text-[13px] text-muted">多城市时区智能换算，一键找到全员都合适的会议时段</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者O</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.6</span>
+          </div>
+        </div>
+      </div>
+      <a href="https://twitter-video-downloader-nine.vercel.app/" target="_blank" rel="noopener noreferrer"
+         class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📥</div>
+        <div class="p-4 flex flex-col gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
+            <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-red-500/20 border border-red-500 text-red-400 w-fit">🪜 需要翻墙</span>
+          </div>
+          <h4 class="text-[16px] font-bold text-white">X 视频下载工具</h4>
+          <p class="text-[13px] text-muted">免会员下载 X (Twitter) 视频，支持选择分辨率与多链接批量下载，手机 &amp; Web 端已适配</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 MICC</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+          </div>
+        </div>
+      </a>
+      <a href="https://daqianli.github.io/aodclock-landing/" target="_blank" rel="noopener noreferrer"
+         class="tool-card ios-glass-card border rounded-2xl overflow-hidden block no-underline">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">⏰</div>
+        <div class="p-4 flex flex-col gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
+            <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-500/20 border border-sky-500 text-sky-400 w-fit">📱 iOS 已上架</span>
+          </div>
+          <h4 class="text-[16px] font-bold text-white">AODclock 息屏时钟</h4>
+          <p class="text-[13px] text-muted">为没有 Always-On Display 的 iPad mini 打造，优雅的息屏时钟应用，iOS 已上架 / 安卓 APK 可下载</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 MICC</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-purple">↗ 访问工具</span>
+          </div>
+        </div>
+      </a>
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden opacity-70">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">🌸</div>
+        <div class="p-4 flex flex-col gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-violet-500/20 border border-violet-500 text-violet-400 w-fit">便利小工具</span>
+            <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-yellow-500/20 border border-yellow-500 text-yellow-400 w-fit">⏳ 审核中</span>
+          </div>
+          <h4 class="text-[16px] font-bold text-white">花粉浓度查询小程序</h4>
+          <p class="text-[13px] text-muted">鼻炎患者必备！基于植被测算的花粉浓度实时查询，接入开放 API，聊胜于无但真的有用</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 MICC</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-faint">即将上线</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- ── 其他 ── -->
-  <div id="panel-other" class="tab-panel">
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">💡</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-500/20 border border-slate-400 text-slate-300 w-fit">其他</span>
-        <h4 class="text-[16px] font-bold text-white">AI 名字生成器</h4>
-        <p class="text-[13px] text-muted">描述项目或品牌调性，生成朗朗上口的中英文创意命名</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者P</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.4</span>
+  <div id="section-other" class="category-section">
+    <div class="section-title-row">
+      <h4>📦 其他</h4>
+      <div class="title-line"></div>
+    </div>
+    <div class="tool-grid">
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">💡</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-500/20 border border-slate-400 text-slate-300 w-fit">其他</span>
+          <h4 class="text-[16px] font-bold text-white">AI 名字生成器</h4>
+          <p class="text-[13px] text-muted">描述项目或品牌调性，生成朗朗上口的中英文创意命名</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者P</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.4</span>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">💬</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-500/20 border border-slate-400 text-slate-300 w-fit">其他</span>
-        <h4 class="text-[16px] font-bold text-white">代码注释生成器</h4>
-        <p class="text-[13px] text-muted">粘贴任意代码，自动添加清晰准确的中文注释说明</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者Q</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.7</span>
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">💬</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-500/20 border border-slate-400 text-slate-300 w-fit">其他</span>
+          <h4 class="text-[16px] font-bold text-white">代码注释生成器</h4>
+          <p class="text-[13px] text-muted">粘贴任意代码，自动添加清晰准确的中文注释说明</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者Q</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.7</span>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
-      <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📚</div>
-      <div class="p-4 flex flex-col gap-2">
-        <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-500/20 border border-slate-400 text-slate-300 w-fit">其他</span>
-        <h4 class="text-[16px] font-bold text-white">学习计划制定器</h4>
-        <p class="text-[13px] text-muted">输入学习目标与时间，生成个性化分阶段学习路径规划</p>
-        <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
-          <span class="text-[12px] text-faint">👤 开发者R</span>
-          <span class="flex-1"></span>
-          <span class="text-[12px] font-semibold text-amber-400">⭐ 4.6</span>
+      <div class="tool-card ios-glass-card border rounded-2xl overflow-hidden cursor-pointer">
+        <div class="bg-cardtop h-24 flex items-center justify-center text-5xl">📚</div>
+        <div class="p-4 flex flex-col gap-2">
+          <span class="badge px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-500/20 border border-slate-400 text-slate-300 w-fit">其他</span>
+          <h4 class="text-[16px] font-bold text-white">学习计划制定器</h4>
+          <p class="text-[13px] text-muted">输入学习目标与时间，生成个性化分阶段学习路径规划</p>
+          <div class="flex items-center gap-2 mt-1 pt-2 border-t border-border">
+            <span class="text-[12px] text-faint">👤 开发者R</span>
+            <span class="flex-1"></span>
+            <span class="text-[12px] font-semibold text-amber-400">⭐ 4.6</span>
+          </div>
         </div>
       </div>
     </div>
@@ -945,39 +1048,69 @@
      JAVASCRIPT
 ═══════════════════════════════════════ -->
 <script>
-  const tabMap = {
-    office: 'panel-office',
-    data:   'panel-data',
-    fun:    'panel-fun',
-    art:    'panel-art',
-    tools:  'panel-tools',
-    other:  'panel-other',
-  };
+  const sections = ['office', 'data', 'fun', 'art', 'tools', 'other'];
 
-  function switchTab(key) {
-    // 隐藏所有面板
-    Object.values(tabMap).forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.classList.remove('active');
-    });
+  // 点击标签 → 滚动到对应分区（offset = sticky navbar + tabbar 高度）
+  function scrollToSection(key) {
+    const target = document.getElementById('section-' + key);
+    if (!target) return;
+    const offset = 72 + 60; // navbar + tabbar
+    const top = target.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: 'smooth' });
+    setActiveTab(key);
+  }
 
-    // 显示目标面板
-    const target = document.getElementById(tabMap[key]);
-    if (target) target.classList.add('active');
-
-    // 重置所有 tab 按钮样式
+  function setActiveTab(key) {
     document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.classList.remove('active-tab', 'glow-border', 'bg-accent', 'text-white', 'font-semibold');
+      btn.classList.remove('active-tab', 'glow-border', 'bg-accent', 'font-semibold', 'text-white');
       btn.classList.add('text-faint', 'font-medium');
     });
-
-    // 激活当前 tab 按钮
     const activeBtn = document.getElementById('tab-' + key);
     if (activeBtn) {
-      activeBtn.classList.add('active-tab', 'glow-border', 'bg-accent', 'text-white', 'font-semibold');
+      activeBtn.classList.add('active-tab', 'glow-border', 'bg-accent', 'font-semibold', 'text-white');
       activeBtn.classList.remove('text-faint', 'font-medium');
     }
   }
+
+  // 滚动联动：IntersectionObserver 监听各 section，自动高亮对应 tab
+  (function () {
+    const OFFSET = 72 + 60 + 40; // navbar + tabbar + buffer
+    let userScrolling = false; // 点击跳转时暂停 observer 响应
+
+    const observer = new IntersectionObserver((entries) => {
+      if (userScrolling) return;
+      // 找到最靠近顶部 offset 线的 section
+      let best = null, bestDist = Infinity;
+      entries.forEach(entry => {
+        const dist = Math.abs(entry.boundingClientRect.top - OFFSET);
+        if (entry.isIntersecting && dist < bestDist) {
+          bestDist = dist;
+          best = entry.target;
+        }
+      });
+      if (best) {
+        const key = best.id.replace('section-', '');
+        setActiveTab(key);
+      }
+    }, {
+      rootMargin: `-${OFFSET}px 0px -40% 0px`,
+      threshold: 0,
+    });
+
+    sections.forEach(key => {
+      const el = document.getElementById('section-' + key);
+      if (el) observer.observe(el);
+    });
+
+    // 点击跳转时短暂暂停 observer，防止与平滑滚动冲突
+    const origScroll = scrollToSection;
+    window.scrollToSection = function(key) {
+      userScrolling = true;
+      setActiveTab(key);
+      origScroll(key);
+      setTimeout(() => { userScrolling = false; }, 800);
+    };
+  })();
 
   // ══════════════════════════════════════════
   //  BOMB CURSOR + EXPLOSION
@@ -1152,6 +1285,71 @@
       input.focus();
     }, 1500);
   }
+
+  // ── Card border particles — continuous while hovering ────────
+  (function () {
+    const INTERVAL_MS  = 40;  // emit every 40ms
+    const PER_TICK     = 3;   // particles per tick
+
+    function getBadgeColor(card) {
+      const badge = card.querySelector('.badge');
+      if (!badge) return '#5B4FE8';
+      return getComputedStyle(badge).borderColor || '#5B4FE8';
+    }
+
+    // Emit one particle from a random point on the card border
+    function emitParticle(rect, color) {
+      // Pick a random edge (0=top,1=right,2=bottom,3=left)
+      const edge = Math.floor(Math.random() * 4);
+      const t    = Math.random();
+      let x, y, vx, vy;
+      const speed = 5 + Math.random() * 8;
+      const spread = (Math.random() - 0.5) * 24;
+
+      if (edge === 0) { x = rect.left + t * rect.width;  y = rect.top;    vx = spread; vy = -speed; }
+      if (edge === 1) { x = rect.right; y = rect.top + t * rect.height;   vx = speed;  vy = spread; }
+      if (edge === 2) { x = rect.left + t * rect.width;  y = rect.bottom; vx = spread; vy = speed;  }
+      if (edge === 3) { x = rect.left;  y = rect.top + t * rect.height;   vx = -speed; vy = spread; }
+
+      const size = 2 + Math.random() * 2.5;
+      const p    = document.createElement('div');
+      p.className = 'border-particle';
+      p.style.left       = (x - size / 2) + 'px';
+      p.style.top        = (y - size / 2) + 'px';
+      p.style.width      = size + 'px';
+      p.style.height     = size + 'px';
+      p.style.background = color;
+      p.style.boxShadow  = `0 0 4px ${color}`;
+      p.style.setProperty('--bpx', vx + 'px');
+      p.style.setProperty('--bpy', vy + 'px');
+      document.body.appendChild(p);
+      p.addEventListener('animationend', () => p.remove());
+    }
+
+    document.querySelectorAll('.tool-card').forEach(card => {
+      let timer = null;
+
+      card.addEventListener('mouseenter', () => {
+        const color = getBadgeColor(card);
+        const glowColor = color.startsWith('rgb(')
+          ? color.replace('rgb(', 'rgba(').replace(')', ', 0.22)')
+          : color;
+        card.style.borderColor = color;
+        card.style.boxShadow = `0 0 28px ${glowColor}`;
+        timer = setInterval(() => {
+          const rect = card.getBoundingClientRect();
+          for (let i = 0; i < PER_TICK; i++) emitParticle(rect, color);
+        }, INTERVAL_MS);
+      });
+
+      card.addEventListener('mouseleave', () => {
+        clearInterval(timer);
+        timer = null;
+        card.style.borderColor = '';
+        card.style.boxShadow = '';
+      });
+    });
+  })();
 </script>
 
 </body>
