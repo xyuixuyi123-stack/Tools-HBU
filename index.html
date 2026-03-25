@@ -772,9 +772,14 @@
             <!-- Gallery gradient preview -->
             <div id="cover-grad-el" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:44px;"></div>
             <!-- Action bar (shown when cover selected) -->
+            <!-- 拖拽调整提示蒙层 -->
+            <div id="cover-adjust-hint" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.32);pointer-events:none;">
+              <span style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:600;letter-spacing:0.03em;">拖动图片调整位置</span>
+            </div>
             <div id="cover-action-bar" style="display:none;position:absolute;bottom:8px;right:8px;flex-direction:row;gap:6px;">
-              <button onclick="openCoverPicker(event)" style="height:26px;padding:0 10px;border-radius:6px;background:rgba(0,0,0,0.62);border:1px solid rgba(255,255,255,0.18);color:#fff;font-size:11px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);">更换</button>
-              <button onclick="removeCover(event)"     style="height:26px;padding:0 10px;border-radius:6px;background:rgba(0,0,0,0.62);border:1px solid rgba(255,255,255,0.18);color:#ff7070;font-size:11px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);">移除</button>
+              <button onclick="openCoverPicker(event)" id="cover-btn-change" style="height:26px;padding:0 10px;border-radius:6px;background:rgba(0,0,0,0.62);border:1px solid rgba(255,255,255,0.18);color:#fff;font-size:11px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);">更换</button>
+              <button onclick="toggleAdjustMode(event)" id="cover-btn-adjust" style="display:none;height:26px;padding:0 10px;border-radius:6px;background:rgba(0,0,0,0.62);border:1px solid rgba(255,255,255,0.18);color:#a78bfa;font-size:11px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);">调整位置</button>
+              <button onclick="removeCover(event)"     id="cover-btn-remove" style="height:26px;padding:0 10px;border-radius:6px;background:rgba(0,0,0,0.62);border:1px solid rgba(255,255,255,0.18);color:#ff7070;font-size:11px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);">移除</button>
             </div>
           </div>
 
@@ -1897,6 +1902,7 @@
     ge.style.display    = 'flex';
     ge.style.background = bg;
     ge.textContent      = emoji;
+    document.getElementById('cover-btn-adjust').style.display = 'none';
     document.getElementById('cover-action-bar').style.display = 'flex';
     document.getElementById('cover-trigger').classList.add('has-cover');
   }
@@ -1907,17 +1913,22 @@
     const im = document.getElementById('cover-img-el');
     im.src = src;
     im.style.display = 'block';
+    document.getElementById('cover-btn-adjust').style.display = 'inline-block';
     document.getElementById('cover-action-bar').style.display = 'flex';
     document.getElementById('cover-trigger').classList.add('has-cover');
   }
 
   function removeCover(e) {
     if (e) { e.stopPropagation(); e.preventDefault(); }
+    if (adjustMode) exitAdjustMode();
     coverData = null;
+    adjustPosX = 50; adjustPosY = 50;
     document.getElementById('cover-empty').style.display      = 'flex';
     document.getElementById('cover-img-el').style.display     = 'none';
     document.getElementById('cover-img-el').src               = '';
+    document.getElementById('cover-img-el').style.objectPosition = '50% 50%';
     document.getElementById('cover-grad-el').style.display    = 'none';
+    document.getElementById('cover-btn-adjust').style.display = 'none';
     document.getElementById('cover-action-bar').style.display = 'none';
     document.getElementById('cover-trigger').classList.remove('has-cover');
     closeCoverPicker();
@@ -1954,6 +1965,100 @@
       closeCoverPicker();
     };
     reader.readAsDataURL(file);
+  }
+
+  // ── Cover image position adjust (drag to reposition) ─────────
+  let adjustMode = false;
+  let adjustPosX = 50, adjustPosY = 50;   // current object-position in %
+  let _adjDragStartX = 0, _adjDragStartY = 0;
+  let _adjStartPosX  = 50, _adjStartPosY = 50;
+
+  function toggleAdjustMode(e) {
+    if (e) e.stopPropagation();
+    adjustMode ? exitAdjustMode() : enterAdjustMode();
+  }
+
+  function enterAdjustMode() {
+    adjustMode = true;
+    const trigger  = document.getElementById('cover-trigger');
+    const hint     = document.getElementById('cover-adjust-hint');
+    const btnAdj   = document.getElementById('cover-btn-adjust');
+    const btnChg   = document.getElementById('cover-btn-change');
+    const btnRem   = document.getElementById('cover-btn-remove');
+    hint.style.display   = 'flex';
+    btnAdj.textContent   = '完成';
+    btnAdj.style.color   = '#34d399';          // green = confirm
+    btnChg.style.display = 'none';
+    btnRem.style.display = 'none';
+    trigger.style.cursor = 'grab';
+    trigger.addEventListener('mousedown',  _adjMouseDown);
+    trigger.addEventListener('touchstart', _adjTouchStart, { passive: false });
+  }
+
+  function exitAdjustMode() {
+    adjustMode = false;
+    const trigger = document.getElementById('cover-trigger');
+    const hint    = document.getElementById('cover-adjust-hint');
+    const btnAdj  = document.getElementById('cover-btn-adjust');
+    const btnChg  = document.getElementById('cover-btn-change');
+    const btnRem  = document.getElementById('cover-btn-remove');
+    hint.style.display   = 'none';
+    btnAdj.textContent   = '调整位置';
+    btnAdj.style.color   = '#a78bfa';
+    btnChg.style.display = 'inline-block';
+    btnRem.style.display = 'inline-block';
+    trigger.style.cursor = 'pointer';
+    // Save position into coverData
+    if (coverData) { coverData.posX = adjustPosX; coverData.posY = adjustPosY; }
+    trigger.removeEventListener('mousedown',  _adjMouseDown);
+    trigger.removeEventListener('touchstart', _adjTouchStart);
+  }
+
+  function _adjMouseDown(e) {
+    if (!adjustMode) return;
+    e.preventDefault();
+    _adjDragStartX = e.clientX;
+    _adjDragStartY = e.clientY;
+    _adjStartPosX  = adjustPosX;
+    _adjStartPosY  = adjustPosY;
+    const trigger = document.getElementById('cover-trigger');
+    trigger.style.cursor = 'grabbing';
+    const onMove = (ev) => _adjDrag(ev.clientX, ev.clientY);
+    const onUp   = () => {
+      trigger.style.cursor = 'grab';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup',   onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onUp);
+  }
+
+  function _adjTouchStart(e) {
+    if (!adjustMode) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    _adjDragStartX = t.clientX;
+    _adjDragStartY = t.clientY;
+    _adjStartPosX  = adjustPosX;
+    _adjStartPosY  = adjustPosY;
+    const onMove = (ev) => { const tt = ev.touches[0]; _adjDrag(tt.clientX, tt.clientY); };
+    const onEnd  = () => {
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend',  onEnd);
+    };
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend',  onEnd);
+  }
+
+  function _adjDrag(cx, cy) {
+    const trigger = document.getElementById('cover-trigger');
+    const rect    = trigger.getBoundingClientRect();
+    const dx = cx - _adjDragStartX;
+    const dy = cy - _adjDragStartY;
+    // Dragging right → image moves right → less X position needed (show left portion)
+    adjustPosX = Math.max(0, Math.min(100, _adjStartPosX - (dx / rect.width  * 100)));
+    adjustPosY = Math.max(0, Math.min(100, _adjStartPosY - (dy / rect.height * 100)));
+    document.getElementById('cover-img-el').style.objectPosition = `${adjustPosX}% ${adjustPosY}%`;
   }
 
   // Close picker when clicking outside the picker panel or trigger
